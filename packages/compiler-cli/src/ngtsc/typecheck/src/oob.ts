@@ -6,7 +6,8 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {BindingPipe, PropertyWrite, TmplAstReference, TmplAstVariable} from '@angular/compiler';
+import {BindingPipe, PropertyWrite, TmplAstBoundEvent, TmplAstElement, TmplAstReference, TmplAstVariable} from '@angular/compiler';
+import {BoundAttribute} from '@angular/compiler/src/render3/r3_ast';
 import * as ts from 'typescript';
 
 import {ErrorCode, makeDiagnostic, makeRelatedInformation, ngErrorCode} from '../../diagnostics';
@@ -74,6 +75,13 @@ export interface OutOfBandDiagnosticRecorder {
    * type-checking configuration prohibits their usage.
    */
   suboptimalTypeInference(templateId: TemplateId, variables: TmplAstVariable[]): void;
+
+  /**
+   * Reports a split two way binding error message.
+   */
+  splitTwoWayBinding(
+      templateId: TemplateId, input: BoundAttribute, output: TmplAstBoundEvent,
+      inputConsumerIdentifier: ts.Identifier, outputConsumer: ts.Identifier|TmplAstElement): void;
 }
 
 export class OutOfBandDiagnosticRecorderImpl implements OutOfBandDiagnosticRecorder {
@@ -210,6 +218,55 @@ export class OutOfBandDiagnosticRecorderImpl implements OutOfBandDiagnosticRecor
     this._diagnostics.push(makeTemplateDiagnostic(
         templateId, mapping, diagnosticVar.keySpan, ts.DiagnosticCategory.Suggestion,
         ngErrorCode(ErrorCode.SUGGEST_SUBOPTIMAL_TYPE_INFERENCE), message));
+  }
+
+  splitTwoWayBinding(
+      templateId: TemplateId, input: BoundAttribute, output: TmplAstBoundEvent,
+      inputConsumerIdentifier: ts.Identifier, outputConsumer: ts.Identifier|TmplAstElement): void {
+    const mapping = this.resolver.getSourceMapping(templateId);
+    const errorMsg = `The property and event of the two-way binding '${
+        input.name}' are not bound to the same target.
+            Find more at https://angular.io/guide/two-way-binding#how-two-way-binding-works`;
+
+    let diagnostic = makeTemplateDiagnostic(
+        templateId, mapping, input.sourceSpan, ts.DiagnosticCategory.Error,
+        ngErrorCode(ErrorCode.SPLIT_TWO_WAY_BINDING), errorMsg);
+
+    let relatedDiagnostics = [{
+      category: ts.DiagnosticCategory.Message,
+      code: 0,
+      file: mapping.node.getSourceFile(),
+      start: inputConsumerIdentifier.getStart(),
+      length: inputConsumerIdentifier.getEnd() - inputConsumerIdentifier.getStart(),
+      messageText: `The property is bound to the '${inputConsumerIdentifier.getText()}' component.`,
+    }];
+
+    if (outputConsumer instanceof TmplAstElement) {
+      relatedDiagnostics.push({
+        category: ts.DiagnosticCategory.Message,
+        code: 0,
+        file: mapping.node.getSourceFile(),
+        start: outputConsumer.sourceSpan.start.offset,
+        length: outputConsumer.sourceSpan.end.offset - outputConsumer.sourceSpan.start.offset,
+        messageText: `The output binding is to a native event called '${input.name}' on the '${
+            outputConsumer.name}' DOM element.
+      
+      Are you missing an output declaration called '${output.name}'?`,
+      });
+    } else {
+      relatedDiagnostics.push({
+        category: ts.DiagnosticCategory.Message,
+        code: 0,
+        file: mapping.node.getSourceFile(),
+        start: outputConsumer.getStart(),
+        length: outputConsumer.getEnd() - outputConsumer.getStart(),
+        messageText: `The event is bound to the '${outputConsumer.getText()}' component.`,
+      });
+    }
+
+    diagnostic.relatedInformation = relatedDiagnostics;
+
+    this._diagnostics.push(diagnostic);
   }
 }
 
