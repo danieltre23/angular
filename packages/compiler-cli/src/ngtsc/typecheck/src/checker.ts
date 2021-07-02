@@ -19,7 +19,7 @@ import {ComponentScopeReader, TypeCheckScopeRegistry} from '../../scope';
 import {isShim} from '../../shims';
 import {getSourceFileOrNull, isSymbolWithValueDeclaration} from '../../util/src/typescript';
 import {DirectiveInScope, ElementSymbol, FullTemplateMapping, GlobalCompletion, OptimizeFor, PipeInScope, ProgramTypeCheckAdapter, ShimLocation, Symbol, TemplateId, TemplateSymbol, TemplateTypeChecker, TypeCheckableDirectiveMeta, TypeCheckingConfig} from '../api';
-import {TemplateDiagnostic} from '../diagnostics';
+import {makeTemplateDiagnostic, TemplateDiagnostic} from '../diagnostics';
 
 import {CompletionEngine} from './completion';
 import {InliningMode, ShimTypeCheckingData, TemplateData, TypeCheckContextImpl, TypeCheckingHost} from './context';
@@ -295,6 +295,15 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
     fileData.isComplete = false;
 
     this.isComplete = false;
+  }
+
+  makeTemplateDiagnostic(clazz: ts.ClassDeclaration, sfPath: AbsoluteFsPath, node: TmplAstNode, category: ts.DiagnosticCategory, errorCode: number, message: string): TemplateDiagnostic  {
+
+    const fileRecord = this.state.get(sfPath)!;
+    const templateId = fileRecord.sourceManager.getTemplateId(clazz);
+    const mapping = fileRecord.sourceManager.getSourceMapping(templateId);
+
+    return makeTemplateDiagnostic(templateId, mapping, node.sourceSpan, category, errorCode, message)
   }
 
   private getOrCreateCompletionEngine(component: ts.ClassDeclaration): CompletionEngine|null {

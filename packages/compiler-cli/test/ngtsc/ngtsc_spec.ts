@@ -41,7 +41,7 @@ function getDiagnosticSourceCode(diag: ts.Diagnostic): string {
   return diag.file!.text.substr(diag.start!, diag.length!);
 }
 
-runInEachFileSystem(allTests);
+runInEachFileSystem.native(allTests);
 
 // Wrap all tests into a function to work around clang-format going crazy and (poorly)
 // reformatting the entire file.
@@ -8102,6 +8102,34 @@ export const Foo = Foo__PRE_R3__;
          expect(diags[0].messageText)
              .toEqual(`Could not find stylesheet file './non-existent-file.css'.`);
        });
+
+       fit('lint prototype', () => {
+        env.write('test.ts', `
+          import {Component, Input, Output, EventEmitter, NgModule} from '@angular/core';
+          @Component({
+            template: '<test2-cmp ([hola])="nose"> <div> </div> </test2-cmp>',
+            selector: 'test-cmp',
+          })
+          export class TestCmp { nose = 0; }
+
+          @Component({
+            template: '<div> hola </div>',
+            selector: 'test2-cmp',
+          })
+          export class Test2Cmp {
+            @Input() hola = 0;
+            @Output() holaChange = new EventEmitter<number>();
+          }
+
+          @NgModule({
+            declarations: [TestCmp, Test2Cmp],
+          })
+          export class Module {}
+        `);
+        env.driveMain();
+        //const diags = env.driveDiagnostics();
+      });
+
   });
 
   function expectTokenAtPosition<T extends ts.Node>(

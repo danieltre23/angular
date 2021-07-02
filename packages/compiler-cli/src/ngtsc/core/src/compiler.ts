@@ -6,6 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
+import { TmplAstElement } from '@angular/compiler/src/compiler';
 import * as ts from 'typescript';
 
 import {ComponentDecoratorHandler, DirectiveDecoratorHandler, InjectableDecoratorHandler, NgModuleDecoratorHandler, NoopReferencesRegistry, PipeDecoratorHandler, ReferencesRegistry} from '../../annotations';
@@ -861,6 +862,43 @@ export class NgCompiler {
     const program = this.programDriver.getProgram();
     this.incrementalStrategy.setIncrementalState(this.incrementalCompilation.state, program);
     this.currentProgram = program;
+
+    //lint prototypes
+    let lint_diagnostics: ts.Diagnostic[] = []
+
+    const typeChecker = compilation.templateTypeChecker;
+    for (const sf of this.inputProgram.getSourceFiles()) {
+      const sfPath = absoluteFromSourceFile(sf);
+      for (const stmt of sf.statements) {
+        if (isNamedClassDeclaration(stmt)) {
+          const template = typeChecker.getTemplate(stmt);
+          // template?.forEach(node => {
+          //   node.
+          // })
+          const tcb = typeChecker.getTypeCheckBlock(stmt);
+          // const meta = typeChecker.getDirectiveMetadata(stmt);
+          // const symbol = typeChecker.getSymbolOfNode(template![0], stmt);
+          if (template !== null && tcb !== null) {
+            // ts.forEachChild(tcb, (node => {
+            //   console.log(node.getFullText())
+            // }))
+            const regexp = new RegExp('\[[^ ]*?\]');
+            if (template[0] instanceof TmplAstElement) {
+              template[0].outputs.forEach(output => {
+                if(output.name.match(regexp)){
+                  lint_diagnostics.push(typeChecker.makeTemplateDiagnostic(stmt, sfPath, output, ts.DiagnosticCategory.Warning, 4, `banana in a box error should be [()] not ([])`));
+                }
+              })
+            }
+            //const visitor = new NgComponentTemplateVisitor();
+            //lint_diagnostics.push(typeChecker.makeTemplateDiagnostic(stmt, sfPath, template![0], ts.DiagnosticCategory.Warning, 4, `sup ${stmt.name.text}`));
+            debugger;
+          }
+        }
+      }
+    }
+
+    diagnostics.push(...lint_diagnostics);
 
     return diagnostics;
   }
