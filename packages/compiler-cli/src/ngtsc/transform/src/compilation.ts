@@ -13,8 +13,9 @@ import {ErrorCode, FatalDiagnosticError} from '../../diagnostics';
 import {IncrementalBuild} from '../../incremental/api';
 import {SemanticDepGraphUpdater, SemanticSymbol} from '../../incremental/semantic_graph';
 import {IndexingContext} from '../../indexer';
+import {LintDiagnosticsImpl} from '../../linter/api';
 import {PerfEvent, PerfRecorder} from '../../perf';
-import {ClassDeclaration, DeclarationNode, Decorator, ReflectionHost} from '../../reflection';
+import {ClassDeclaration, DeclarationNode, Decorator, isNamedClassDeclaration, ReflectionHost} from '../../reflection';
 import {ProgramTypeCheckAdapter, TypeCheckContext} from '../../typecheck/api';
 import {getSourceFile, isExported} from '../../util/src/typescript';
 import {Xi18nContext} from '../../xi18n';
@@ -471,6 +472,24 @@ export class TraitCompiler implements ProgramTypeCheckAdapter {
         }
         if (trait.resolution !== null) {
           trait.handler.typeCheck(ctx, clazz, trait.analysis, trait.resolution);
+        }
+      }
+    }
+  }
+
+  lintCheck(sf: ts.SourceFile, lintDiag: LintDiagnosticsImpl): void {
+    if (!this.fileToClasses.has(sf)) {
+      return;
+    }
+
+    for (const clazz of this.fileToClasses.get(sf)!) {
+      const record = this.classes.get(clazz)!;
+      for (const trait of record.traits) {
+        if (trait.handler.lintCheck === undefined) {
+          continue;
+        }
+        if (isNamedClassDeclaration(clazz)) {
+          trait.handler.lintCheck(clazz, lintDiag);
         }
       }
     }

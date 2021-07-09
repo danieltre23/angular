@@ -8,6 +8,7 @@
 
 import {AST, MethodCall, ParseError, PropertyRead, SafeMethodCall, SafePropertyRead, TmplAstElement, TmplAstNode, TmplAstTemplate} from '@angular/compiler';
 import {AbsoluteFsPath} from '@angular/compiler-cli/src/ngtsc/file_system';
+import {ParseSourceSpan} from '@angular/compiler/src/parse_util';
 import * as ts from 'typescript';
 
 import {FullTemplateMapping, TypeCheckableDirectiveMeta} from './api';
@@ -155,7 +156,9 @@ export interface TemplateTypeChecker {
    */
   invalidateClass(clazz: ts.ClassDeclaration): void;
 
-  makeTemplateDiagnostic(clazz: ts.ClassDeclaration, sfPath: AbsoluteFsPath, node: TmplAstNode, category: ts.DiagnosticCategory, errorCode: number, message: string): ts.Diagnostic;
+  makeTemplateDiagnostic(
+      clazz: ts.ClassDeclaration, sfPath: AbsoluteFsPath, sourceSpan: ParseSourceSpan,
+      category: ts.DiagnosticCategory, errorCode: number, message: string): ts.Diagnostic;
 }
 
 /**

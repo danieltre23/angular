@@ -126,7 +126,7 @@ class ExpressionVisitor extends RecursiveAstVisitor {
  * Visits the AST of a parsed Angular template. Discovers and stores
  * identifiers of interest, deferring to an `ExpressionVisitor` as needed.
  */
-class TemplateVisitor extends TmplAstRecursiveVisitor {
+class TemplateVisitor extends TmplAstRecursiveVisitor {  // visitor chido
   // Identifiers of interest found in the template.
   readonly identifiers = new Set<TopLevelIdentifier>();
 

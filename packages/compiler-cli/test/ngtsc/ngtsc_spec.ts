@@ -8103,22 +8103,27 @@ export const Foo = Foo__PRE_R3__;
              .toEqual(`Could not find stylesheet file './non-existent-file.css'.`);
        });
 
-       fit('lint prototype', () => {
-        env.write('test.ts', `
+    fit('lint prototype', () => {
+      env.write('test.ts', `
           import {Component, Input, Output, EventEmitter, NgModule} from '@angular/core';
           @Component({
-            template: '<test2-cmp ([hola])="nose"> <div> </div> </test2-cmp>',
+            template: '<test2-cmp ([var3])="var1" (var4)="var2 ?? var5 ?? 1"> <test2-cmp ([var3])="var1" (var4)="var2 ?? var5 ?? 1"> </test2-cmp> </test2-cmp>',
             selector: 'test-cmp',
           })
-          export class TestCmp { nose = 0; }
+          export class TestCmp {
+            var1: number = 0;
+            var2: number = 0;
+            var5: number = 0;
+          }
 
           @Component({
-            template: '<div> hola </div>',
+            template: '<div> hi </div>',
             selector: 'test2-cmp',
           })
           export class Test2Cmp {
-            @Input() hola = 0;
-            @Output() holaChange = new EventEmitter<number>();
+            @Input() var3 = 0;
+            @Output() var3Change = new EventEmitter<number | null>();
+            @Input() var4 = 0;
           }
 
           @NgModule({
@@ -8126,10 +8131,10 @@ export const Foo = Foo__PRE_R3__;
           })
           export class Module {}
         `);
-        env.driveMain();
-        //const diags = env.driveDiagnostics();
-      });
-
+      env.driveMain();
+      // const diags = env.driveLinter();
+      // console.log(diags);
+    });
   });
 
   function expectTokenAtPosition<T extends ts.Node>(

@@ -17,6 +17,7 @@ import {ImportedFile, ModuleResolver, Reference, ReferenceEmitter} from '../../i
 import {DependencyTracker} from '../../incremental/api';
 import {extractSemanticTypeParameters, isArrayEqual, isReferenceEqual, SemanticDepGraphUpdater, SemanticReference, SemanticSymbol} from '../../incremental/semantic_graph';
 import {IndexingContext} from '../../indexer';
+import {LintDiagnosticsImpl} from '../../linter/api';
 import {ClassPropertyMapping, ComponentResources, DirectiveMeta, DirectiveTypeCheckMeta, extractDirectiveTypeCheckMeta, InjectableClassRegistry, MetadataReader, MetadataRegistry, MetaType, Resource, ResourceRegistry} from '../../metadata';
 import {EnumValue, PartialEvaluator, ResolvedValue} from '../../partial_evaluator';
 import {PerfEvent, PerfRecorder} from '../../perf';
@@ -609,6 +610,10 @@ export class ComponentDecoratorHandler implements
     ctx.addTemplate(
         new Reference(node), binder, meta.template.diagNodes, scope.pipes, scope.schemas,
         meta.template.sourceMapping, meta.template.file, meta.template.errors);
+  }
+
+  lintCheck(clazz: ts.ClassDeclaration, lintDiag: LintDiagnosticsImpl): void {
+    lintDiag.lintClass(clazz);
   }
 
   resolve(

@@ -7,6 +7,7 @@
  */
 
 import {AST, CssSelector, DomElementSchemaRegistry, MethodCall, ParseError, parseTemplate, PropertyRead, SafeMethodCall, SafePropertyRead, TmplAstElement, TmplAstNode, TmplAstReference, TmplAstTemplate, TmplAstVariable} from '@angular/compiler';
+import {ParseSourceSpan} from '@angular/compiler/src/parse_util';
 import * as ts from 'typescript';
 
 import {absoluteFrom, absoluteFromSourceFile, AbsoluteFsPath, getSourceFileOrError} from '../../file_system';
@@ -297,13 +298,14 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
     this.isComplete = false;
   }
 
-  makeTemplateDiagnostic(clazz: ts.ClassDeclaration, sfPath: AbsoluteFsPath, node: TmplAstNode, category: ts.DiagnosticCategory, errorCode: number, message: string): TemplateDiagnostic  {
-
+  makeTemplateDiagnostic(
+      clazz: ts.ClassDeclaration, sfPath: AbsoluteFsPath, sourceSpan: ParseSourceSpan,
+      category: ts.DiagnosticCategory, errorCode: number, message: string): TemplateDiagnostic {
     const fileRecord = this.state.get(sfPath)!;
     const templateId = fileRecord.sourceManager.getTemplateId(clazz);
     const mapping = fileRecord.sourceManager.getSourceMapping(templateId);
 
-    return makeTemplateDiagnostic(templateId, mapping, node.sourceSpan, category, errorCode, message)
+    return makeTemplateDiagnostic(templateId, mapping, sourceSpan, category, errorCode, message)
   }
 
   private getOrCreateCompletionEngine(component: ts.ClassDeclaration): CompletionEngine|null {
