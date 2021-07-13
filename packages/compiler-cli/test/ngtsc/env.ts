@@ -300,7 +300,7 @@ export class NgtscTestEnvironment {
     const program = createProgram({rootNames, host, options});
     const typeChecker = (program as NgtscProgram).getTsProgram().getTypeChecker();
     const templateTypeChecker = (program as NgtscProgram).compiler.getTemplateTypeChecker();
-    const lintDiag = new LintDiagnosticsImpl(templateTypeChecker, typeChecker);
+    const lintDiag = new LintDiagnosticsImpl(templateTypeChecker);
     (program as NgtscProgram).emitLinter(lintDiag);
 
     return lintDiag.diagnostics;

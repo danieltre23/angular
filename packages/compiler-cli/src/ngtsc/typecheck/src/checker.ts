@@ -299,8 +299,9 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
   }
 
   makeTemplateDiagnostic(
-      clazz: ts.ClassDeclaration, sfPath: AbsoluteFsPath, sourceSpan: ParseSourceSpan,
-      category: ts.DiagnosticCategory, errorCode: number, message: string): TemplateDiagnostic {
+      clazz: ts.ClassDeclaration, sourceSpan: ParseSourceSpan, category: ts.DiagnosticCategory,
+      errorCode: number, message: string): TemplateDiagnostic {
+    const sfPath = absoluteFromSourceFile(clazz.getSourceFile());
     const fileRecord = this.state.get(sfPath)!;
     const templateId = fileRecord.sourceManager.getTemplateId(clazz);
     const mapping = fileRecord.sourceManager.getSourceMapping(templateId);

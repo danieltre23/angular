@@ -157,8 +157,8 @@ export interface TemplateTypeChecker {
   invalidateClass(clazz: ts.ClassDeclaration): void;
 
   makeTemplateDiagnostic(
-      clazz: ts.ClassDeclaration, sfPath: AbsoluteFsPath, sourceSpan: ParseSourceSpan,
-      category: ts.DiagnosticCategory, errorCode: number, message: string): ts.Diagnostic;
+      clazz: ts.ClassDeclaration, sourceSpan: ParseSourceSpan, category: ts.DiagnosticCategory,
+      errorCode: number, message: string): ts.Diagnostic;
 }
 
 /**

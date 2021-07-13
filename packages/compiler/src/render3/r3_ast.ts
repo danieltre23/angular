@@ -205,8 +205,6 @@ export class RecursiveVisitor implements Visitor<void> {
     visitAll(this, element.attributes);
     visitAll(this, element.children);
     visitAll(this, element.references);
-    visitAll(this, element.inputs);
-    visitAll(this, element.outputs);
   }
   visitTemplate(template: Template): void {
     visitAll(this, template.attributes);

@@ -873,8 +873,7 @@ export class NgCompiler {
     this.currentProgram = program;
 
     const lintChecks = [new NullishLintCheck()];
-    const lintDiag =
-        new LintDiagnosticsImpl(compilation.templateTypeChecker, program.getTypeChecker());
+    const lintDiag = new LintDiagnosticsImpl(compilation.templateTypeChecker);
     this.linter(lintDiag);
     diagnostics.push(...lintDiag.diagnostics);
 

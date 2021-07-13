@@ -1,9 +1,9 @@
 import {TmplAstNode} from '@angular/compiler';
-import {TmplAstRecursiveVisitor} from '@angular/compiler/src/compiler';
+import {RecursiveAstVisitor, TmplAstBoundAttribute, TmplAstBoundEvent, TmplAstBoundText, TmplAstElement, TmplAstRecursiveVisitor, TmplAstTemplate} from '@angular/compiler/src/compiler';
+
 import ts = require('typescript');
 import {ClassDeclaration} from '../reflection';
 import {TemplateTypeChecker} from '../typecheck/api';
-import {Banana2LintCheck} from './lintChecks/banana2lintcheck';
 import {BananaLintCheck} from './lintChecks/bananalintcheck';
 import {NullishLintCheck} from './lintChecks/nullishLintCheck';
 
@@ -15,10 +15,8 @@ export interface TemplateLintCheck {
 
 export interface LintContext {
   template: TmplAstNode[];
-  tcb: ts.Node;
   templateTypeChecker: TemplateTypeChecker;
   classDeclaration: ClassDeclaration<ts.ClassDeclaration>;
-  typeChecker: ts.TypeChecker;
   lintDiag: LintDiagnosticsImpl;
   config: Record<string, unknown>|null;
 }
@@ -26,39 +24,30 @@ export interface LintContext {
 interface LintDiagnostics {
   diagnostics: ReadonlyArray<ts.Diagnostic>;
   templateTypeChecker: TemplateTypeChecker;
-  typeChecker: ts.TypeChecker;
   lintChecks: TemplateLintCheck[];
 
   lintClass(clazz: ts.ClassDeclaration): void;
 }
 
 export class LintDiagnosticsImpl implements LintDiagnostics {
-  constructor(
-      templateTypeChecker: TemplateTypeChecker, typeChecker: ts.TypeChecker,
-      lintChecks?: TemplateLintCheck[]) {
+  constructor(templateTypeChecker: TemplateTypeChecker, lintChecks?: TemplateLintCheck[]) {
     this.templateTypeChecker = templateTypeChecker;
-    this.typeChecker = typeChecker;
     if (lintChecks !== undefined) {
       this.lintChecks = lintChecks;
     }
   }
 
   templateTypeChecker: TemplateTypeChecker;
-  typeChecker: ts.TypeChecker;
   diagnostics: ts.Diagnostic[] = [];
-  lintChecks: TemplateLintCheck[] =
-      [new BananaLintCheck(), /*new Banana2LintCheck(),*/ new NullishLintCheck()];
+  lintChecks: TemplateLintCheck[] = [new BananaLintCheck(), new NullishLintCheck()];
 
   lintClass(clazz: ts.ClassDeclaration) {
     const template = this.templateTypeChecker.getTemplate(clazz);
-    const tcb = this.templateTypeChecker.getTypeCheckBlock(clazz);
-    if (template !== null && tcb !== null) {
+    if (template !== null) {
       const ctx = {
         template: template,
-        tcb: tcb,
         templateTypeChecker: this.templateTypeChecker,
         classDeclaration: clazz,
-        typeChecker: this.typeChecker,
         lintDiag: this,
         config: null
       } as LintContext;
@@ -70,10 +59,64 @@ export class LintDiagnosticsImpl implements LintDiagnostics {
   }
 }
 
-export class LintRecursiveVisitor extends TmplAstRecursiveVisitor {
+export class LintAstVisitor extends RecursiveAstVisitor {
   ctx: LintContext;
+
   constructor(ctx: LintContext) {
     super();
     this.ctx = ctx;
+  }
+}
+
+export class LintTemplateVisitor extends TmplAstRecursiveVisitor {
+  ctx: LintContext;
+  withAstVisitor: LintAstVisitor|undefined;
+
+  constructor(ctx: LintContext, withAstVisitor?: LintAstVisitor) {
+    super();
+    this.ctx = ctx;
+    this.withAstVisitor = withAstVisitor
+  }
+
+  visit(node: TmplAstNode) {
+    node.visit(this);
+  }
+
+  visitAll(nodes: TmplAstNode[]) {
+    nodes.forEach(node => this.visit(node));
+  }
+
+  visitElement(element: TmplAstElement) {
+    this.visitAll(element.references);
+    this.visitAll(element.inputs);
+    this.visitAll(element.attributes);
+    this.visitAll(element.children);
+    this.visitAll(element.outputs);
+  }
+
+  visitTemplate(template: TmplAstTemplate) {
+    this.visitAll(template.variables);
+    this.visitAll(template.attributes);
+    this.visitAll(template.templateAttrs);
+    this.visitAll(template.children);
+    this.visitAll(template.references);
+  }
+
+  visitBoundText(boundText: TmplAstBoundText): void {
+    if (this.withAstVisitor !== undefined) {
+      this.withAstVisitor.visit(boundText.value);
+    }
+  }
+
+  visitBoundAttribute(boundAttribute: TmplAstBoundAttribute): void {
+    if (this.withAstVisitor !== undefined) {
+      this.withAstVisitor.visit(boundAttribute.value);
+    }
+  }
+
+  visitBoundEvent(boundEvent: TmplAstBoundEvent): void {
+    if (this.withAstVisitor !== undefined) {
+      this.withAstVisitor.visit(boundEvent.handler);
+    }
   }
 }
