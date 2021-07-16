@@ -361,6 +361,36 @@ describe('getSemanticDiagnostics', () => {
     expect(diag.category).toBe(ts.DiagnosticCategory.Error);
     expect(getTextOfDiagnostic(diag)).toBe(`'./missing.css'`);
   });
+
+  fit('lint proto', () => {
+    const files = {
+      'app.ts': `
+      import {Component, NgModule, Input, Output, EventEmitter} from '@angular/core';
+
+      @Component({ template: '<div ([var3])="var1" (var4)="var2 ?? 1"> </div>' })
+      export class AppComponent1 {
+        var1: number = 0;
+        var2: number = 0;
+      }
+    `,
+      'app-module.ts': `
+        import {NgModule} from '@angular/core';
+        import {CommonModule} from '@angular/common';
+        import {AppComponent, AppComponent2} from './app';
+
+        @NgModule({
+          declarations: [AppComponent, AppComponent2],
+          imports: [CommonModule],
+        })
+        export class AppModule {}
+    `
+    };
+
+    const project = createModuleAndProjectWithDeclarations(env, 'test', files);
+    const diags = project.getDiagnosticsForFile('app.ts');
+    expect(diags.length).toBe(1);
+    console.log(diags);
+  });
 });
 
 function getTextOfDiagnostic(diag: ts.Diagnostic): string {

@@ -7,7 +7,6 @@
  */
 
 import {CustomTransformers, defaultGatherDiagnostics, Program} from '@angular/compiler-cli';
-import {LintDiagnosticsImpl} from '@angular/compiler-cli/src/ngtsc/linter/api';
 import * as api from '@angular/compiler-cli/src/transformers/api';
 import * as ts from 'typescript';
 
@@ -291,19 +290,6 @@ export class NgtscTestEnvironment {
     const exitCode = mainXi18n(args, errorSpy);
     expect(errorSpy).not.toHaveBeenCalled();
     expect(exitCode).toEqual(0);
-  }
-
-  driveLinter(): ts.Diagnostic[] {
-    const {rootNames, options} = readNgcCommandLineAndConfiguration(this.commandLineArgs);
-    console.log(options);
-    const host = createCompilerHost({options});
-    const program = createProgram({rootNames, host, options});
-    const typeChecker = (program as NgtscProgram).getTsProgram().getTypeChecker();
-    const templateTypeChecker = (program as NgtscProgram).compiler.getTemplateTypeChecker();
-    const lintDiag = new LintDiagnosticsImpl(templateTypeChecker);
-    (program as NgtscProgram).emitLinter(lintDiag);
-
-    return lintDiag.diagnostics;
   }
 }
 

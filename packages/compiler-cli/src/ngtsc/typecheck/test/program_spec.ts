@@ -10,15 +10,53 @@ import * as ts from 'typescript';
 
 import {absoluteFrom, AbsoluteFsPath, getSourceFileOrError} from '../../file_system';
 import {runInEachFileSystem} from '../../file_system/testing';
+import {lintClass} from '../../linter/api';
+import {BananaLintCheck} from '../../linter/lintChecks/bananalintcheck';
 import {TsCreateProgramDriver, UpdateMode} from '../../program_driver';
 import {sfExtensionData, ShimReferenceTagger} from '../../shims';
 import {expectCompleteReuse, makeProgram} from '../../testing';
 import {OptimizeFor} from '../api';
 
-import {setup} from './test_utils';
+import {getClass, setup} from './test_utils';
 
-runInEachFileSystem(() => {
+runInEachFileSystem.native(() => {
   describe('template type-checking program', () => {
+    fit('lint prototipe unit', () => {
+      const fileName = absoluteFrom('/main.ts');
+      const dirFile = absoluteFrom('/dir.ts');
+      const {program, templateTypeChecker, programStrategy} = setup([
+        {
+          fileName,
+          templates: {
+            'TestCmp': '<div ([input])="var1"> </div>',
+          },
+          source: 'export class TestCmp { var1: string = "text" }',
+          declarations: [{
+            name: 'TestDir',
+            selector: '[dir]',
+            file: dirFile,
+            type: 'directive',
+            inputs: {input: 'input'},
+          }]
+        },
+        {
+          fileName: dirFile,
+          source: `
+          import {Input, Output, EventEmitter} from '@angular/compiler';
+          export class TestDir { @Input input: string; @Output inputChange = new EventEmitter<string>(); }
+        `,
+          templates: {},
+        }
+      ]);
+      const sf = getSourceFileOrError(program, fileName);
+      const clazz = getClass(sf, 'TestCmp');
+      const diags =
+          lintClass(clazz, templateTypeChecker, program.getTypeChecker(), [new BananaLintCheck()]);
+      expect(diags.length).toBe(1);
+      expect(diags[0].category).toBe(ts.DiagnosticCategory.Warning);
+      expect(diags[0].messageText).toBe('Banana in a box error should be [()] not ([])');
+    });
+
     it('should not be created if no components need to be checked', () => {
       const fileName = absoluteFrom('/main.ts');
       const {program, templateTypeChecker, programStrategy} = setup([{

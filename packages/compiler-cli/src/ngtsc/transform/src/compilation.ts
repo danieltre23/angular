@@ -13,10 +13,9 @@ import {ErrorCode, FatalDiagnosticError} from '../../diagnostics';
 import {IncrementalBuild} from '../../incremental/api';
 import {SemanticDepGraphUpdater, SemanticSymbol} from '../../incremental/semantic_graph';
 import {IndexingContext} from '../../indexer';
-import {LintDiagnosticsImpl} from '../../linter/api';
 import {PerfEvent, PerfRecorder} from '../../perf';
 import {ClassDeclaration, DeclarationNode, Decorator, isNamedClassDeclaration, ReflectionHost} from '../../reflection';
-import {ProgramTypeCheckAdapter, TypeCheckContext} from '../../typecheck/api';
+import {ProgramTypeCheckAdapter, TemplateTypeChecker, TypeCheckContext} from '../../typecheck/api';
 import {getSourceFile, isExported} from '../../util/src/typescript';
 import {Xi18nContext} from '../../xi18n';
 
@@ -477,9 +476,12 @@ export class TraitCompiler implements ProgramTypeCheckAdapter {
     }
   }
 
-  lintCheck(sf: ts.SourceFile, lintDiag: LintDiagnosticsImpl): void {
+  lintCheck(
+      sf: ts.SourceFile, templateTypeChecker: TemplateTypeChecker,
+      typeChecker: ts.TypeChecker): ts.Diagnostic[] {
+    const diagnostics: ts.Diagnostic[] = [];
     if (!this.fileToClasses.has(sf)) {
-      return;
+      return diagnostics;
     }
 
     for (const clazz of this.fileToClasses.get(sf)!) {
@@ -489,10 +491,11 @@ export class TraitCompiler implements ProgramTypeCheckAdapter {
           continue;
         }
         if (isNamedClassDeclaration(clazz)) {
-          trait.handler.lintCheck(clazz, lintDiag);
+          diagnostics.push(...trait.handler.lintCheck(clazz, templateTypeChecker, typeChecker));
         }
       }
     }
+    return diagnostics;
   }
 
   index(ctx: IndexingContext): void {

@@ -18,7 +18,6 @@ import {NgCompilerOptions} from './core/api';
 import {absoluteFrom, AbsoluteFsPath, getFileSystem, resolve} from './file_system';
 import {TrackedIncrementalBuildStrategy} from './incremental';
 import {IndexedComponent} from './indexer';
-import {LintDiagnosticsImpl} from './linter/api';
 import {ActivePerfRecorder, PerfCheckpoint as PerfCheckpoint, PerfEvent, PerfPhase} from './perf';
 import {TsCreateProgramDriver} from './program_driver';
 import {DeclarationNode} from './reflection';
@@ -225,10 +224,6 @@ export class NgtscProgram implements api.Program {
 
   listLazyRoutes(entryRoute?: string|undefined): api.LazyRoute[] {
     return this.compiler.listLazyRoutes(entryRoute);
-  }
-
-  emitLinter(lintDiag: LintDiagnosticsImpl): void {
-    this.compiler.linter(lintDiag);
   }
 
   private emitXi18n(): void {

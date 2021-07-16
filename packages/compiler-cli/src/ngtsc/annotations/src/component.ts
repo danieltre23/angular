@@ -17,14 +17,14 @@ import {ImportedFile, ModuleResolver, Reference, ReferenceEmitter} from '../../i
 import {DependencyTracker} from '../../incremental/api';
 import {extractSemanticTypeParameters, isArrayEqual, isReferenceEqual, SemanticDepGraphUpdater, SemanticReference, SemanticSymbol} from '../../incremental/semantic_graph';
 import {IndexingContext} from '../../indexer';
-import {LintDiagnosticsImpl} from '../../linter/api';
+import {lintClass} from '../../linter/api';
 import {ClassPropertyMapping, ComponentResources, DirectiveMeta, DirectiveTypeCheckMeta, extractDirectiveTypeCheckMeta, InjectableClassRegistry, MetadataReader, MetadataRegistry, MetaType, Resource, ResourceRegistry} from '../../metadata';
 import {EnumValue, PartialEvaluator, ResolvedValue} from '../../partial_evaluator';
 import {PerfEvent, PerfRecorder} from '../../perf';
 import {ClassDeclaration, DeclarationNode, Decorator, ReflectionHost, reflectObjectLiteral} from '../../reflection';
 import {ComponentScopeReader, LocalModuleScopeRegistry, TypeCheckScopeRegistry} from '../../scope';
 import {AnalysisOutput, CompileResult, DecoratorHandler, DetectResult, HandlerFlags, HandlerPrecedence, ResolveResult} from '../../transform';
-import {TemplateSourceMapping, TypeCheckContext} from '../../typecheck/api';
+import {TemplateSourceMapping, TemplateTypeChecker, TypeCheckContext} from '../../typecheck/api';
 import {SubsetOfKeys} from '../../util/src/typescript';
 import {Xi18nContext} from '../../xi18n';
 
@@ -612,8 +612,10 @@ export class ComponentDecoratorHandler implements
         meta.template.sourceMapping, meta.template.file, meta.template.errors);
   }
 
-  lintCheck(clazz: ts.ClassDeclaration, lintDiag: LintDiagnosticsImpl): void {
-    lintDiag.lintClass(clazz);
+  lintCheck(
+      clazz: ts.ClassDeclaration, templateTypeChecker: TemplateTypeChecker,
+      typeChecker: ts.TypeChecker): ts.Diagnostic[] {
+    return lintClass(clazz, templateTypeChecker, typeChecker);
   }
 
   resolve(

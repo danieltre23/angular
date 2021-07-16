@@ -1,5 +1,4 @@
-import {TmplAstNode} from '@angular/compiler';
-import {RecursiveAstVisitor, TmplAstBoundAttribute, TmplAstBoundEvent, TmplAstBoundText, TmplAstElement, TmplAstRecursiveVisitor, TmplAstTemplate} from '@angular/compiler/src/compiler';
+import {RecursiveAstVisitor, TmplAstBoundAttribute, TmplAstBoundEvent, TmplAstBoundText, TmplAstElement, TmplAstNode, TmplAstRecursiveVisitor, TmplAstTemplate} from '@angular/compiler';
 
 import ts = require('typescript');
 import {ClassDeclaration} from '../reflection';
@@ -10,72 +9,42 @@ import {NullishLintCheck} from './lintChecks/nullishLintCheck';
 export interface TemplateLintCheck {
   identifier: string;
   category: ts.DiagnosticCategory;
-  run(ctx: LintContext): void;
+  run(ctx: LintContext): ts.Diagnostic[];
 }
 
 export interface LintContext {
   template: TmplAstNode[];
   templateTypeChecker: TemplateTypeChecker;
-  classDeclaration: ClassDeclaration<ts.ClassDeclaration>;
-  lintDiag: LintDiagnosticsImpl;
-  config: Record<string, unknown>|null;
+  typeChecker: ts.TypeChecker;
+  clazz: ts.ClassDeclaration;
 }
 
-interface LintDiagnostics {
-  diagnostics: ReadonlyArray<ts.Diagnostic>;
-  templateTypeChecker: TemplateTypeChecker;
-  lintChecks: TemplateLintCheck[];
+export function lintClass(
+    clazz: ts.ClassDeclaration, templateTypeChecker: TemplateTypeChecker,
+    typeChecker: ts.TypeChecker, lintChecks?: TemplateLintCheck[]): ts.Diagnostic[] {
+  if (lintChecks === undefined) {
+    lintChecks = [new BananaLintCheck(), new NullishLintCheck()];
+  }
+  const diagnostics: ts.Diagnostic[] = [];
 
-  lintClass(clazz: ts.ClassDeclaration): void;
-}
+  const template = templateTypeChecker.getTemplate(clazz);
+  if (template !== null) {
+    const ctx = {template, templateTypeChecker, typeChecker, clazz, config: null} as LintContext;
 
-export class LintDiagnosticsImpl implements LintDiagnostics {
-  constructor(templateTypeChecker: TemplateTypeChecker, lintChecks?: TemplateLintCheck[]) {
-    this.templateTypeChecker = templateTypeChecker;
-    if (lintChecks !== undefined) {
-      this.lintChecks = lintChecks;
-    }
+    lintChecks.forEach(check => {
+      diagnostics.push(...check.run(ctx));
+    });
   }
 
-  templateTypeChecker: TemplateTypeChecker;
-  diagnostics: ts.Diagnostic[] = [];
-  lintChecks: TemplateLintCheck[] = [new BananaLintCheck(), new NullishLintCheck()];
-
-  lintClass(clazz: ts.ClassDeclaration) {
-    const template = this.templateTypeChecker.getTemplate(clazz);
-    if (template !== null) {
-      const ctx = {
-        template: template,
-        templateTypeChecker: this.templateTypeChecker,
-        classDeclaration: clazz,
-        lintDiag: this,
-        config: null
-      } as LintContext;
-
-      this.lintChecks.forEach(check => {
-        check.run(ctx);
-      });
-    }
-  }
-}
-
-export class LintAstVisitor extends RecursiveAstVisitor {
-  ctx: LintContext;
-
-  constructor(ctx: LintContext) {
-    super();
-    this.ctx = ctx;
-  }
+  return diagnostics;
 }
 
 export class LintTemplateVisitor extends TmplAstRecursiveVisitor {
-  ctx: LintContext;
-  withAstVisitor: LintAstVisitor|undefined;
+  withAstVisitor: RecursiveAstVisitor|undefined;
 
-  constructor(ctx: LintContext, withAstVisitor?: LintAstVisitor) {
+  constructor(withAstVisitor?: RecursiveAstVisitor) {
     super();
-    this.ctx = ctx;
-    this.withAstVisitor = withAstVisitor
+    this.withAstVisitor = withAstVisitor;
   }
 
   visit(node: TmplAstNode) {

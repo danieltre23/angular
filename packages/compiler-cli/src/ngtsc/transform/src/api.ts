@@ -12,10 +12,9 @@ import * as ts from 'typescript';
 import {Reexport} from '../../imports';
 import {SemanticSymbol} from '../../incremental/semantic_graph';
 import {IndexingContext} from '../../indexer';
-import {LintDiagnosticsImpl} from '../../linter/api';
 import {ClassDeclaration, Decorator} from '../../reflection';
 import {ImportManager} from '../../translator';
-import {TypeCheckContext} from '../../typecheck/api';
+import {TemplateTypeChecker, TypeCheckContext} from '../../typecheck/api';
 import {Xi18nContext} from '../../xi18n';
 
 /**
@@ -188,7 +187,9 @@ export interface DecoratorHandler<D, A, S extends SemanticSymbol|null, R> {
       (ctx: TypeCheckContext, node: ClassDeclaration, analysis: Readonly<A>,
        resolution: Readonly<R>): void;
 
-  lintCheck?(clazz: ts.ClassDeclaration, lintDiag: LintDiagnosticsImpl): void;
+  lintCheck?
+      (clazz: ts.ClassDeclaration, tempalteTypeChecker: TemplateTypeChecker,
+       typeChecker: ts.TypeChecker): ts.Diagnostic[];
 
   /**
    * Generate a description of the field which should be added to the class, including any

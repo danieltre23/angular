@@ -18,7 +18,6 @@ import {AbsoluteModuleStrategy, AliasingHost, AliasStrategy, DefaultImportTracke
 import {IncrementalBuildStrategy, IncrementalCompilation, IncrementalState} from '../../incremental';
 import {SemanticSymbol} from '../../incremental/semantic_graph';
 import {generateAnalysis, IndexedComponent, IndexingContext} from '../../indexer';
-import {LintDiagnosticsImpl} from '../../linter/api';
 import {NullishLintCheck} from '../../linter/lintChecks/nullishLintCheck';
 import {ComponentResources, CompoundMetadataReader, CompoundMetadataRegistry, DirectiveMeta, DtsMetadataReader, InjectableClassRegistry, LocalMetadataRegistry, MetadataReader, PipeMeta, ResourceRegistry} from '../../metadata';
 import {PartialEvaluator} from '../../partial_evaluator';
@@ -688,11 +687,19 @@ export class NgCompiler {
     compilation.traitCompiler.xi18n(ctx);
   }
 
-  linter(lintDiag: LintDiagnosticsImpl): void {
+  linter(sf?: ts.SourceFile): ts.Diagnostic[] {
+    const diagnostics: ts.Diagnostic[] = [];
     const compilation = this.ensureAnalyzed();
-    for (const sf of this.inputProgram.getSourceFiles()) {
-      compilation.traitCompiler.lintCheck(sf, lintDiag);
+    const typeChecker = this.inputProgram.getTypeChecker();
+    if (sf !== undefined) {
+      return compilation.traitCompiler.lintCheck(sf, compilation.templateTypeChecker, typeChecker);
     }
+    for (const sf of this.inputProgram.getSourceFiles()) {
+      diagnostics.push(
+          ...compilation.traitCompiler.lintCheck(sf, compilation.templateTypeChecker, typeChecker));
+    }
+
+    return diagnostics;
   }
 
   private ensureAnalyzed(this: NgCompiler): LazyCompilationState {
@@ -873,9 +880,7 @@ export class NgCompiler {
     this.currentProgram = program;
 
     const lintChecks = [new NullishLintCheck()];
-    const lintDiag = new LintDiagnosticsImpl(compilation.templateTypeChecker);
-    this.linter(lintDiag);
-    diagnostics.push(...lintDiag.diagnostics);
+    diagnostics.push(...this.linter());
 
     return diagnostics;
   }
@@ -893,6 +898,8 @@ export class NgCompiler {
     const program = this.programDriver.getProgram();
     this.incrementalStrategy.setIncrementalState(this.incrementalCompilation.state, program);
     this.currentProgram = program;
+
+    diagnostics.push(...this.linter(sf));
 
     return diagnostics;
   }

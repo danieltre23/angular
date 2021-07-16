@@ -8135,6 +8135,38 @@ export const Foo = Foo__PRE_R3__;
       // const diags = env.driveLinter();
       // console.log(diags);
     });
+
+    it('banana in a box lint check', () => {
+      env.tsconfig({tempalteChecks: true});
+      env.write('test.ts', `
+          import {Component, Input, Output, EventEmitter, NgModule} from '@angular/core';
+          @Component({
+            template: '<test2-cmp ([var2])="var1"> </test2-cmp>',
+            selector: 'test-cmp',
+          })
+          export class TestCmp {
+            var1: number = 0;
+          }
+
+          @Component({
+            template: '<div> hi </div>',
+            selector: 'test2-cmp',
+          })
+          export class Test2Cmp {
+            @Input() var2 = 0;
+            @Output() var2Change = new EventEmitter<number>();
+          }
+
+          @NgModule({
+            declarations: [TestCmp, Test2Cmp],
+          })
+          export class Module {}
+        `);
+      const diags = env.driveDiagnostics();
+      expect(diags.length).toEqual(1);
+      expect(diags[0].category).toEqual(ts.DiagnosticCategory.Warning);
+      expect(diags[0].messageText).toEqual('Banana in a box error should be [()] not ([])');
+    });
   });
 
   function expectTokenAtPosition<T extends ts.Node>(
