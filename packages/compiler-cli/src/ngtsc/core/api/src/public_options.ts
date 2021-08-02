@@ -252,6 +252,13 @@ export interface StrictTemplateOptions {
    * Defaults to `false` unless `fullTemplateTypeCheck` or `strictTemplates` are set.
    */
   strictLiteralTypes?: boolean;
+
+  /**
+   * Whether to run all template checks and generate extended template diagnostics.
+   *
+   * Defaults to `false`, even if `fullTemplateTypeCheck` or `strictTemplates` are set.
+   */
+  extendedTemplateDiagnostics?: boolean;
 }
 
 /**

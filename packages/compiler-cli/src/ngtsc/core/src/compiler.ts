@@ -427,8 +427,10 @@ export class NgCompiler {
    * Get all Angular-related diagnostics for this compilation.
    */
   getDiagnostics(): ts.Diagnostic[] {
-    return this.addMessageTextDetails(
-        [...this.getNonTemplateDiagnostics(), ...this.getTemplateDiagnostics()]);
+    return this.addMessageTextDetails([
+      ...this.getNonTemplateDiagnostics(), ...this.getTemplateDiagnostics(),
+      ...this.getExtendedTemplateDiagnostics()
+    ]);
   }
 
   /**
@@ -439,7 +441,8 @@ export class NgCompiler {
   getDiagnosticsForFile(file: ts.SourceFile, optimizeFor: OptimizeFor): ts.Diagnostic[] {
     return this.addMessageTextDetails([
       ...this.getNonTemplateDiagnostics().filter(diag => diag.file === file),
-      ...this.getTemplateDiagnosticsForFile(file, optimizeFor)
+      ...this.getTemplateDiagnosticsForFile(file, optimizeFor),
+      ...this.getExtendedTemplateDiagnostics(file)
     ]);
   }
 
@@ -892,6 +895,25 @@ export class NgCompiler {
       }
     }
     return this.nonTemplateDiagnostics;
+  }
+
+  private getExtendedTemplateDiagnostics(sf?: ts.SourceFile): ts.Diagnostic[] {
+    if (!this.options.extendedTemplateDiagnostics) {
+      return [];
+    }
+    const diagnostics: ts.Diagnostic[] = [];
+    const compilation = this.ensureAnalyzed();
+    const typeChecker = this.inputProgram.getTypeChecker();
+    if (sf !== undefined) {
+      return compilation.traitCompiler.extendedTemplateCheck(
+          sf, compilation.templateTypeChecker, typeChecker);
+    }
+    for (const sf of this.inputProgram.getSourceFiles()) {
+      diagnostics.push(...compilation.traitCompiler.extendedTemplateCheck(
+          sf, compilation.templateTypeChecker, typeChecker));
+    }
+
+    return diagnostics;
   }
 
   private makeCompilation(): LazyCompilationState {
