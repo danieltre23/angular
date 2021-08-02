@@ -23,7 +23,8 @@ import {PerfEvent, PerfRecorder} from '../../perf';
 import {ClassDeclaration, DeclarationNode, Decorator, ReflectionHost, reflectObjectLiteral} from '../../reflection';
 import {ComponentScopeReader, LocalModuleScopeRegistry, TypeCheckScopeRegistry} from '../../scope';
 import {AnalysisOutput, CompileResult, DecoratorHandler, DetectResult, HandlerFlags, HandlerPrecedence, ResolveResult} from '../../transform';
-import {TemplateSourceMapping, TypeCheckContext} from '../../typecheck/api';
+import {TemplateSourceMapping, TemplateTypeChecker, TypeCheckContext} from '../../typecheck/api';
+import {allTemplateChecks, getExtendedTemplateDiagnosticsForComponent} from '../../typecheck/extended';
 import {SubsetOfKeys} from '../../util/src/typescript';
 import {Xi18nContext} from '../../xi18n';
 
@@ -610,6 +611,13 @@ export class ComponentDecoratorHandler implements
     ctx.addTemplate(
         new Reference(node), binder, meta.template.diagNodes, scope.pipes, scope.schemas,
         meta.template.sourceMapping, meta.template.file, meta.template.errors);
+  }
+
+  extendedTemplateCheck(
+      component: ts.ClassDeclaration, templateTypeChecker: TemplateTypeChecker,
+      typeChecker: ts.TypeChecker): ts.Diagnostic[] {
+    return getExtendedTemplateDiagnosticsForComponent(
+        component, templateTypeChecker, typeChecker, allTemplateChecks);
   }
 
   resolve(

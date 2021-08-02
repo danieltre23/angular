@@ -46,6 +46,7 @@ export interface NgcCompatibilityOptions {
 
 // @public
 export interface StrictTemplateOptions {
+    extendedTemplateDiagnostics?: boolean;
     strictAttributeTypes?: boolean;
     strictContextGenerics?: boolean;
     strictDomEventTypes?: boolean;
@@ -63,7 +64,6 @@ export interface StrictTemplateOptions {
 export interface TargetOptions {
     compilationMode?: 'full' | 'partial';
 }
-
 
 // (No @packageDocumentation comment for this package)
 

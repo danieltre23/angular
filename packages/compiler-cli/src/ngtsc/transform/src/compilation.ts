@@ -14,8 +14,8 @@ import {IncrementalBuild} from '../../incremental/api';
 import {SemanticDepGraphUpdater, SemanticSymbol} from '../../incremental/semantic_graph';
 import {IndexingContext} from '../../indexer';
 import {PerfEvent, PerfRecorder} from '../../perf';
-import {ClassDeclaration, DeclarationNode, Decorator, ReflectionHost} from '../../reflection';
-import {ProgramTypeCheckAdapter, TypeCheckContext} from '../../typecheck/api';
+import {ClassDeclaration, DeclarationNode, Decorator, isNamedClassDeclaration, ReflectionHost} from '../../reflection';
+import {ProgramTypeCheckAdapter, TemplateTypeChecker, TypeCheckContext} from '../../typecheck/api';
 import {getSourceFile, isExported} from '../../util/src/typescript';
 import {Xi18nContext} from '../../xi18n';
 
@@ -488,6 +488,30 @@ export class TraitCompiler implements ProgramTypeCheckAdapter {
         }
       }
     }
+  }
+
+  extendedTemplateCheck(
+      sf: ts.SourceFile, templateTypeChecker: TemplateTypeChecker,
+      typeChecker: ts.TypeChecker): ts.Diagnostic[] {
+    const classes = this.fileToClasses.get(sf);
+    if (classes === undefined) {
+      return [];
+    }
+
+    const diagnostics: ts.Diagnostic[] = [];
+    for (const clazz of classes) {
+      if (isNamedClassDeclaration(clazz)) {
+        const record = this.classes.get(clazz)!;
+        for (const trait of record.traits) {
+          if (trait.handler.extendedTemplateCheck === undefined) {
+            continue;
+          }
+          diagnostics.push(
+              ...trait.handler.extendedTemplateCheck(clazz, templateTypeChecker, typeChecker));
+        }
+      }
+    }
+    return diagnostics;
   }
 
   index(ctx: IndexingContext): void {
