@@ -29,6 +29,22 @@ export interface TypeCheckableDirectiveMeta extends DirectiveMeta, DirectiveType
 export type TemplateId = string&{__brand: 'TemplateId'};
 
 /**
+ * A `ts.Diagnostic` with additional information about the diagnostic related to template
+ * type-checking.
+ */
+export interface TemplateDiagnostic extends ts.Diagnostic {
+  /**
+   * The component with the template that resulted in this diagnostic.
+   */
+  componentFile: ts.SourceFile;
+
+  /**
+   * The template id of the component that resulted in this diagnostic.
+   */
+  templateId: TemplateId;
+}
+
+/**
  * Metadata required in addition to a component class in order to generate a type check block (TCB)
  * for that component.
  */

@@ -8,8 +8,10 @@
 
 import {TmplAstBoundEvent, TmplAstNode, TmplAstRecursiveVisitor} from '@angular/compiler';
 import * as ts from 'typescript';
+
 import {ErrorCode} from '../../../../../diagnostics';
-import {TemplateCheck, TemplateContext, TemplateDiagnostic} from '../../../api/api';
+import {TemplateDiagnostic} from '../../../../api';
+import {ExtendedTemplateDiagnostic, TemplateCheck, TemplateContext} from '../../../api/api';
 
 /**
  * Ensures the two-way binding syntax is correct.
@@ -20,7 +22,7 @@ export class InvalidBananaInBoxCheck implements TemplateCheck<ErrorCode.INVALID_
   code: ErrorCode.INVALID_BANANA_IN_BOX = 8101;
 
   run(ctx: TemplateContext,
-      template: TmplAstNode[]): TemplateDiagnostic<ErrorCode.INVALID_BANANA_IN_BOX>[] {
+      template: TmplAstNode[]): ExtendedTemplateDiagnostic<ErrorCode.INVALID_BANANA_IN_BOX>[] {
     const visitor = new BananaVisitor(ctx);
 
     return visitor.getDiagnostics(template);
@@ -28,7 +30,7 @@ export class InvalidBananaInBoxCheck implements TemplateCheck<ErrorCode.INVALID_
 }
 
 class BananaVisitor extends TmplAstRecursiveVisitor {
-  private diagnostics: ts.Diagnostic[] = [];
+  private diagnostics: TemplateDiagnostic[] = [];
 
   constructor(public readonly ctx: TemplateContext) {
     super();
@@ -55,7 +57,7 @@ class BananaVisitor extends TmplAstRecursiveVisitor {
     }
   }
 
-  getDiagnostics(template: TmplAstNode[]): ts.Diagnostic[] {
+  getDiagnostics(template: TmplAstNode[]): TemplateDiagnostic[] {
     this.diagnostics = [];
     for (const node of template) {
       node.visit(this);

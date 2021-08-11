@@ -9,7 +9,7 @@
 import * as ts from 'typescript';
 
 import {ErrorCode} from '../../../diagnostics';
-import {TemplateTypeChecker} from '../../api';
+import {TemplateDiagnostic, TemplateTypeChecker} from '../../api';
 import {ExtendedTemplateChecker, TemplateCheck, TemplateContext} from '../api';
 
 export class ExtendedTemplateCheckerImpl implements ExtendedTemplateChecker {
@@ -18,7 +18,7 @@ export class ExtendedTemplateCheckerImpl implements ExtendedTemplateChecker {
       private readonly typeChecker: ts.TypeChecker,
       private readonly templateChecks: TemplateCheck<ErrorCode>[]) {}
 
-  getExtendedTemplateDiagnosticsForComponent(component: ts.ClassDeclaration): ts.Diagnostic[] {
+  getExtendedTemplateDiagnosticsForComponent(component: ts.ClassDeclaration): TemplateDiagnostic[] {
     const template = this.templateTypeChecker.getTemplate(component);
     // Skip checks if component has no template. This can happen if the user writes a
     // `@Component()` but doesn't add the template, could happen in the language service
@@ -26,7 +26,7 @@ export class ExtendedTemplateCheckerImpl implements ExtendedTemplateChecker {
     if (template === null) {
       return [];
     }
-    const diagnostics: ts.Diagnostic[] = [];
+    const diagnostics: TemplateDiagnostic[] = [];
 
     const ctx = {
       templateTypeChecker: this.templateTypeChecker,
@@ -78,8 +78,8 @@ export class ExtendedTemplateCheckerImpl implements ExtendedTemplateChecker {
 // TODO(danieltrevino): handle duplicated diagnostics when they are being generated
 // to avoid extra work (could be directly in the visitor).
 // https://github.com/angular/angular/pull/42984#discussion_r684823926
-function deduplicateDiagnostics(diagnostics: ts.Diagnostic[]): ts.Diagnostic[] {
-  const result: ts.Diagnostic[] = [];
+function deduplicateDiagnostics(diagnostics: TemplateDiagnostic[]): TemplateDiagnostic[] {
+  const result: TemplateDiagnostic[] = [];
   for (const newDiag of diagnostics) {
     const isDuplicateDiag = result.some(existingDiag => areDiagnosticsEqual(newDiag, existingDiag));
     if (!isDuplicateDiag) {
@@ -89,7 +89,7 @@ function deduplicateDiagnostics(diagnostics: ts.Diagnostic[]): ts.Diagnostic[] {
   return result;
 }
 
-function areDiagnosticsEqual(first: ts.Diagnostic, second: ts.Diagnostic): boolean {
+function areDiagnosticsEqual(first: TemplateDiagnostic, second: TemplateDiagnostic): boolean {
   return first.file?.fileName === second.file?.fileName && first.start === second.start &&
       first.length === second.length && first.code === second.code;
 }
