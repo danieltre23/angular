@@ -22,6 +22,8 @@ import {isShim} from '../../shims';
 import {getSourceFileOrNull, isSymbolWithValueDeclaration} from '../../util/src/typescript';
 import {DirectiveInScope, ElementSymbol, FullTemplateMapping, GlobalCompletion, NgTemplateDiagnostic, OptimizeFor, PipeInScope, ProgramTypeCheckAdapter, ShimLocation, Symbol, TemplateDiagnostic, TemplateId, TemplateSymbol, TemplateTypeChecker, TypeCheckableDirectiveMeta, TypeCheckingConfig} from '../api';
 import {makeTemplateDiagnostic} from '../diagnostics';
+import {ExtendedTemplateCheckerImpl} from '../extended';
+import {InvalidBananaInBoxCheck} from '../extended/src/template_checks/invalid_banana_in_box';
 
 import {CompletionEngine} from './completion';
 import {InliningMode, ShimTypeCheckingData, TemplateData, TypeCheckContextImpl, TypeCheckingHost} from './context';
@@ -214,7 +216,8 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
     });
   }
 
-  getDiagnosticsForComponent(component: ts.ClassDeclaration): ts.Diagnostic[] {
+  getDiagnosticsForComponent(component: ts.ClassDeclaration, extendedTemplateDiagnsotics?: boolean):
+      ts.Diagnostic[] {
     this.ensureShimForComponent(component);
 
     return this.perf.inPhase(PerfPhase.TtcDiagnostics, () => {
@@ -244,6 +247,14 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
       diagnostics.push(...typeCheckProgram.getSemanticDiagnostics(shimSf).map(
           diag => convertDiagnostic(diag, fileRecord.sourceManager)));
       diagnostics.push(...shimRecord.genesisDiagnostics);
+
+      if (extendedTemplateDiagnsotics) {
+        const extendedTemplateChecker = new ExtendedTemplateCheckerImpl(
+            this, typeCheckProgram.getTypeChecker(), [new InvalidBananaInBoxCheck()]);
+
+        diagnostics.push(
+            ...extendedTemplateChecker.getExtendedTemplateDiagnosticsForComponent(component));
+      }
 
       for (const templateData of shimRecord.templates.values()) {
         diagnostics.push(...templateData.templateDiagnostics);
