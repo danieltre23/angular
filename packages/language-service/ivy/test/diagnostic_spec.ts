@@ -383,6 +383,29 @@ describe('getSemanticDiagnostics', () => {
     expect(diags[0].code).toEqual(ErrorCode.INVALID_BANANA_IN_BOX);
     expect(diags[0].category).toEqual(ts.DiagnosticCategory.Warning);
   });
+
+  it('should produce invalid banana in box warning in external html file', () => {
+    const files = {
+      'app.ts': `
+        import {Component} from '@angular/core';
+        @Component({
+          selector: 'test',
+          templateUrl: './app.html',
+        })
+        export class TestCmp { 
+          bar: string = "text"; 
+        }
+    `,
+      'app.html': `<div ([foo])="bar"></div>`
+    };
+    const project = createModuleAndProjectWithDeclarations(
+        env, 'test', files, {strictTemplates: true, extendedTemplateDiagnostics: true});
+
+    const diags = project.getDiagnosticsForFile('app.html');
+    expect(diags.length).toEqual(1);
+    expect(diags[0].code).toEqual(ErrorCode.INVALID_BANANA_IN_BOX);
+    expect(diags[0].category).toEqual(ts.DiagnosticCategory.Warning);
+  });
 });
 
 function getTextOfDiagnostic(diag: ts.Diagnostic): string {
