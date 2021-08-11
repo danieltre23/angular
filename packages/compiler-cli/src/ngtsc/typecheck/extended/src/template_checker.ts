@@ -26,9 +26,12 @@ export function getExtendedTemplateDiagnosticsForComponent(
   // Skip checks if component has no template. This can happen if the user writes a
   // `@Component()` but doesn't add the template, could happen in the language service
   // when users are in the middle of typing code.
+  console.log('called')
   if (template === null) {
+    console.log('no template')
     return [];
   }
+  console.log(template[0])
   const diagnostics: ts.Diagnostic[] = [];
 
   const ctx = {templateTypeChecker, typeChecker, component} as TemplateContext;
@@ -37,6 +40,7 @@ export function getExtendedTemplateDiagnosticsForComponent(
     diagnostics.push(...deduplicateDiagnostics(check.run(ctx, template)));
   }
 
+  console.log(diagnostics.length);
   return diagnostics;
 }
 

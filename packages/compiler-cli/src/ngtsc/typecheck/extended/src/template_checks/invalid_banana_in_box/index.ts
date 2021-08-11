@@ -23,6 +23,8 @@ export class InvalidBananaInBoxCheck implements TemplateCheck<ErrorCode.INVALID_
       template: TmplAstNode[]): TemplateDiagnostic<ErrorCode.INVALID_BANANA_IN_BOX>[] {
     const visitor = new BananaVisitor(ctx);
 
+    console.log('banana');
+
     return visitor.getDiagnostics(template);
   }
 }
@@ -42,6 +44,8 @@ class BananaVisitor extends TmplAstRecursiveVisitor {
    */
   override visitBoundEvent(boundEvent: TmplAstBoundEvent) {
     const name = boundEvent.name;
+    console.log(boundEvent);
+    console.log(`output ${name}`)
     if (name.startsWith('[') && name.endsWith(']')) {
       const boundSyntax = boundEvent.sourceSpan.toString();
       const expectedBoundSyntax = boundSyntax.replace(`(${name})`, `[(${name.slice(1, -1)})]`);

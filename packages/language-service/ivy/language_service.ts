@@ -16,6 +16,7 @@ import {FileUpdate, ProgramDriver} from '@angular/compiler-cli/src/ngtsc/program
 import {isNamedClassDeclaration} from '@angular/compiler-cli/src/ngtsc/reflection';
 import {TypeCheckShimGenerator} from '@angular/compiler-cli/src/ngtsc/typecheck';
 import {OptimizeFor} from '@angular/compiler-cli/src/ngtsc/typecheck/api';
+import {allTemplateChecks, getExtendedTemplateDiagnosticsForComponent} from '@angular/compiler-cli/src/ngtsc/typecheck/extended';
 import {findFirstMatchingNode} from '@angular/compiler-cli/src/ngtsc/typecheck/src/comments';
 import * as ts from 'typescript/lib/tsserverlibrary';
 
@@ -70,8 +71,9 @@ export class LanguageService {
     return this.withCompilerAndPerfTracing(PerfPhase.LsDiagnostics, (compiler) => {
       const ttc = compiler.getTemplateTypeChecker();
       const diagnostics: ts.Diagnostic[] = [];
+      const program = compiler.getCurrentProgram();
+      debugger;
       if (isTypeScriptFile(fileName)) {
-        const program = compiler.getCurrentProgram();
         const sourceFile = program.getSourceFile(fileName);
         if (sourceFile) {
           const ngDiagnostics = compiler.getDiagnosticsForFile(sourceFile, OptimizeFor.SingleFile);
@@ -97,17 +99,21 @@ export class LanguageService {
           //
           // TODO(alxhub): figure out a good user experience for indirect template diagnostics
           // and show them from within the Language Service.
-          diagnostics.push(...ngDiagnostics.filter(
-              diag => diag.file !== undefined && diag.file.fileName === sourceFile.fileName));
+          diagnostics.push(...ngDiagnostics);
         }
       } else {
         const components = compiler.getComponentsWithTemplateFile(fileName);
         for (const component of components) {
           if (ts.isClassDeclaration(component)) {
             diagnostics.push(...ttc.getDiagnosticsForComponent(component));
+            debugger;
+            diagnostics.push(...getExtendedTemplateDiagnosticsForComponent(
+                component, ttc, program.getTypeChecker(), allTemplateChecks));
+            console.log(diagnostics.length)
           }
         }
       }
+      console.log(diagnostics.length)
       return diagnostics;
     });
   }

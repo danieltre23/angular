@@ -898,9 +898,9 @@ export class NgCompiler {
   }
 
   private getExtendedTemplateDiagnostics(sf?: ts.SourceFile): ts.Diagnostic[] {
-    if (!this.options.extendedTemplateDiagnostics) {
-      return [];
-    }
+    // if (!this.options.extendedTemplateDiagnostics) {
+    //   return [];
+    // }
     const diagnostics: ts.Diagnostic[] = [];
     const compilation = this.ensureAnalyzed();
     const typeChecker = this.inputProgram.getTypeChecker();
