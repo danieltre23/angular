@@ -104,7 +104,8 @@ export class LanguageService {
         const components = compiler.getComponentsWithTemplateFile(fileName);
         for (const component of components) {
           if (ts.isClassDeclaration(component)) {
-            diagnostics.push(...ttc.getDiagnosticsForComponent(component));
+            diagnostics.push(...ttc.getDiagnosticsForComponent(
+                component, compiler.options._extendedTemplateDiagnostics));
           }
         }
       }

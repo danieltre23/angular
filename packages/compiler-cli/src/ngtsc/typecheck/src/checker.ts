@@ -22,6 +22,7 @@ import {isShim} from '../../shims';
 import {getSourceFileOrNull, isSymbolWithValueDeclaration} from '../../util/src/typescript';
 import {DirectiveInScope, ElementSymbol, FullTemplateMapping, GlobalCompletion, OptimizeFor, PipeInScope, ProgramTypeCheckAdapter, ShimLocation, Symbol, TemplateDiagnostic, TemplateId, TemplateSymbol, TemplateTypeChecker, TypeCheckableDirectiveMeta, TypeCheckingConfig} from '../api';
 import {makeTemplateDiagnostic} from '../diagnostics';
+import {allTemplateChecks, ExtendedTemplateCheckerImpl} from '../extended';
 
 import {CompletionEngine} from './completion';
 import {InliningMode, ShimTypeCheckingData, TemplateData, TypeCheckContextImpl, TypeCheckingHost} from './context';
@@ -214,7 +215,8 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
     });
   }
 
-  getDiagnosticsForComponent(component: ts.ClassDeclaration): ts.Diagnostic[] {
+  getDiagnosticsForComponent(component: ts.ClassDeclaration, extendedTemplateDiagnsotics?: boolean):
+      ts.Diagnostic[] {
     this.ensureShimForComponent(component);
 
     return this.perf.inPhase(PerfPhase.TtcDiagnostics, () => {
@@ -244,6 +246,14 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
       diagnostics.push(...typeCheckProgram.getSemanticDiagnostics(shimSf).map(
           diag => convertDiagnostic(diag, fileRecord.sourceManager)));
       diagnostics.push(...shimRecord.genesisDiagnostics);
+
+      if (extendedTemplateDiagnsotics === true) {
+        const extendedTemplateChecker = new ExtendedTemplateCheckerImpl(
+            this, typeCheckProgram.getTypeChecker(), allTemplateChecks);
+
+        diagnostics.push(
+            ...extendedTemplateChecker.getExtendedTemplateDiagnosticsForComponent(component));
+      }
 
       for (const templateData of shimRecord.templates.values()) {
         diagnostics.push(...templateData.templateDiagnostics);

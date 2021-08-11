@@ -63,7 +63,8 @@ export interface TemplateTypeChecker {
    *
    * This method always runs in `OptimizeFor.SingleFile` mode.
    */
-  getDiagnosticsForComponent(component: ts.ClassDeclaration): ts.Diagnostic[];
+  getDiagnosticsForComponent(component: ts.ClassDeclaration, extendedTemplateDiagnsotics?: boolean):
+      ts.Diagnostic[];
 
   /**
    * Ensures shims for the whole program are generated. This type of operation would be required by
