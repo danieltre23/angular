@@ -33,6 +33,7 @@ import {OptimizeFor, TemplateTypeChecker, TypeCheckingConfig} from '../../typech
 import {ExtendedTemplateCheckerImpl} from '../../typecheck/extended';
 import {TemplateCheckFactory} from '../../typecheck/extended/api';
 import {InvalidBananaInBoxCheck} from '../../typecheck/extended/checks/invalid_banana_in_box';
+import {NullishCoalescingNotNullableCheck} from '../../typecheck/extended/checks/nullish_coalescing_not_nullable';
 import {getSourceFileOrNull, isDtsPath, resolveModuleName, toUnredirectedSourceFile} from '../../util/src/typescript';
 import {Xi18nContext} from '../../xi18n';
 import {LazyRoute, NgCompilerAdapter, NgCompilerOptions} from '../api';
@@ -919,7 +920,7 @@ export class NgCompiler {
     const diagnostics: ts.Diagnostic[] = [];
     const compilation = this.ensureAnalyzed();
     const typeChecker = this.inputProgram.getTypeChecker();
-    const templateChecks: TemplateCheckFactory[] = [(ctx) => new InvalidBananaInBoxCheck(ctx)];
+    const templateChecks: TemplateCheckFactory[] = [(ctx) => new InvalidBananaInBoxCheck(ctx), (ctx) => new NullishCoalescingNotNullableCheck(ctx)];
     const extendedTemplateChecker = new ExtendedTemplateCheckerImpl(
         compilation.templateTypeChecker, typeChecker, templateChecks);
     if (sf !== undefined) {

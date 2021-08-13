@@ -23,7 +23,9 @@ import {getSourceFileOrNull, isSymbolWithValueDeclaration} from '../../util/src/
 import {DirectiveInScope, ElementSymbol, FullTemplateMapping, GlobalCompletion, NgTemplateDiagnostic, OptimizeFor, PipeInScope, ProgramTypeCheckAdapter, ShimLocation, Symbol, TemplateDiagnostic, TemplateId, TemplateSymbol, TemplateTypeChecker, TypeCheckableDirectiveMeta, TypeCheckingConfig} from '../api';
 import {makeTemplateDiagnostic} from '../diagnostics';
 import {ExtendedTemplateCheckerImpl} from '../extended';
+import { TemplateCheckFactory } from '../extended/api';
 import {InvalidBananaInBoxCheck} from '../extended/checks/invalid_banana_in_box';
+import {NullishCoalescingNotNullableCheck} from '../extended/checks/nullish_coalescing_not_nullable';
 
 import {CompletionEngine} from './completion';
 import {InliningMode, ShimTypeCheckingData, TemplateData, TypeCheckContextImpl, TypeCheckingHost} from './context';
@@ -249,8 +251,9 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
       diagnostics.push(...shimRecord.genesisDiagnostics);
 
       if (extendedTemplateDiagnsotics) {
+        const templateChecks: TemplateCheckFactory[] = [(ctx) => new InvalidBananaInBoxCheck(ctx), (ctx) => new NullishCoalescingNotNullableCheck(ctx)];
         const extendedTemplateChecker = new ExtendedTemplateCheckerImpl(
-            this, typeCheckProgram.getTypeChecker(), [(ctx) => new InvalidBananaInBoxCheck(ctx)]);
+            this, typeCheckProgram.getTypeChecker(), templateChecks);
 
         diagnostics.push(
             ...extendedTemplateChecker.getExtendedTemplateDiagnosticsForComponent(component));
