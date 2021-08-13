@@ -6,7 +6,8 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {TmplAstNode} from '@angular/compiler';
+import {AST, RecursiveAstVisitor, TmplAstBoundAttribute, TmplAstBoundEvent, TmplAstBoundText, TmplAstContent, TmplAstElement, TmplAstIcu, TmplAstNode, TmplAstRecursiveVisitor, TmplAstReference, TmplAstTemplate, TmplAstText, TmplAstTextAttribute, TmplAstVariable} from '@angular/compiler';
+import {ASTWithSource} from '@angular/compiler/src/compiler';
 import * as ts from 'typescript';
 
 import {ErrorCode} from '../../../diagnostics';
@@ -45,4 +46,89 @@ export interface TemplateContext {
 
   /** The `@Component()` class from which the template was obtained. */
   component: ts.ClassDeclaration;
+}
+
+/**
+ * This abstract class provides a base implementation for the run and visit*
+ * methods.
+ */
+export abstract class TemplateCheckWithVisitor<T extends ErrorCode> implements TemplateCheck<T> {
+  abstract code: T;
+
+  /**
+   * Base implementation for run function, visits all nodes in template and calls
+   * `visitExpressionNode()` and `visitTemplateNode()` for each corresponding node.
+   */
+  run(ctx: TemplateContext, template: TmplAstNode[]): ExtendedTemplateDiagnostic<T>[] {
+    const visitor = new CompleteVisitor<T>(ctx, this);
+    visitor.visitAllNodes(template);
+    return visitor.diagnostics;
+  }
+
+  /**
+   * Visit a TmplAstNode or AST node of the template AST,
+   * authors should override this method to implement the check and return
+   * diagnostics.
+   */
+  abstract visitNode(ctx: TemplateContext, node: TmplAstNode|AST): ExtendedTemplateDiagnostic<T>[];
+}
+
+class CompleteVisitor<T extends ErrorCode> extends RecursiveAstVisitor implements
+    TmplAstRecursiveVisitor {
+  diagnostics: ExtendedTemplateDiagnostic<T>[] = [];
+
+  constructor(readonly ctx: TemplateContext, readonly check: TemplateCheckWithVisitor<T>) {
+    super();
+  }
+
+  override visit(node: AST|TmplAstNode, context?: any) {
+    this.diagnostics.push(...this.check.visitNode(this.ctx, node));
+    node.visit(this);
+  }
+
+  visitAllNodes(nodes: TmplAstNode[]) {
+    nodes.forEach(node => this.visit(node));
+  }
+
+  visitElement(element: TmplAstElement) {
+    this.visitAllNodes(element.references);
+    this.visitAllNodes(element.inputs);
+    this.visitAllNodes(element.attributes);
+    this.visitAllNodes(element.children);
+    this.visitAllNodes(element.outputs);
+  }
+
+  visitTemplate(template: TmplAstTemplate) {
+    this.visitAllNodes(template.variables);
+    this.visitAllNodes(template.attributes);
+    this.visitAllNodes(template.children);
+    this.visitAllNodes(template.references);
+    if (template.tagName === 'ng-template') {
+      this.visitAllNodes(template.templateAttrs);
+      this.visitAllNodes(template.inputs);
+      this.visitAllNodes(template.outputs);
+    }
+  }
+  visitContent(content: TmplAstContent): void {}
+  visitVariable(variable: TmplAstVariable): void {}
+  visitReference(reference: TmplAstReference): void {}
+  visitTextAttribute(attribute: TmplAstTextAttribute): void {}
+  visitBoundAttribute(attribute: TmplAstBoundAttribute): void {
+    this.visitAst(attribute.value);
+  }
+  visitBoundEvent(attribute: TmplAstBoundEvent): void {
+    this.visitAst(attribute.handler);
+  }
+  visitText(text: TmplAstText): void {}
+  visitBoundText(text: TmplAstBoundText): void {
+    this.visitAst(text.value);
+  }
+  visitIcu(icu: TmplAstIcu): void {}
+
+  visitAst(ast: AST) {
+    if (ast instanceof ASTWithSource) {
+      ast = ast.ast;
+    }
+    this.visit(ast);
+  }
 }
