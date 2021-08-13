@@ -9,7 +9,9 @@
 import {ErrorCode} from '../../diagnostics';
 import {TemplateCheck} from './api/api';
 import {InvalidBananaInBoxCheck} from './src/template_checks/invalid_banana_in_box';
+import {NullishCoalesingCheck} from './src/template_checks/nullish_coalescing';
 
 export {getExtendedTemplateDiagnosticsForComponent} from './src/template_checker';
 
-export const allTemplateChecks: TemplateCheck<ErrorCode>[] = [new InvalidBananaInBoxCheck()];
+export const allTemplateChecks: TemplateCheck<ErrorCode>[] =
+    [new InvalidBananaInBoxCheck(), new NullishCoalesingCheck()];

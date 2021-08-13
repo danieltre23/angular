@@ -182,6 +182,8 @@ export enum ErrorCode {
    */
   INVALID_BANANA_IN_BOX = 8101,
 
+  NULLISH_COALESCING = 8102,
+
   /**
    * The template type-checking engine would need to generate an inline type check block for a
    * component, but the current type-checking environment doesn't support it.
