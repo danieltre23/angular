@@ -1,0 +1,57 @@
+/**
+ * @license
+ * Copyright Google LLC All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://angular.io/license
+ */
+
+import * as ts from 'typescript';
+import {ErrorCode} from '../../../../../diagnostics';
+import {absoluteFrom, getSourceFileOrError} from '../../../../../file_system';
+import {runInEachFileSystem} from '../../../../../file_system/testing';
+import {getSourceCodeForDiagnostic} from '../../../../../testing';
+import {getClass, setup} from '../../../../testing';
+import {ExtendedTemplateCheckerImpl} from '../../../src/extended_template_checker';
+import {NullishCoalescingNotNullableCheck} from '../../../src/template_checks/nullish_coalescing_not_nullable';
+
+runInEachFileSystem(() => {
+  describe('TemplateChecks', () => {
+    it('should produce nullish coalescing warning', () => {
+      const fileName = absoluteFrom('/main.ts');
+      const {program, templateTypeChecker} = setup([{
+        fileName,
+        templates: {
+          'TestCmp': '{{ var1 ?? null }}',
+        },
+        source: 'export class TestCmp { var1: string = "text"; }'
+      }]);
+      const sf = getSourceFileOrError(program, fileName);
+      const component = getClass(sf, 'TestCmp');
+      const extendedTemplateChecker = new ExtendedTemplateCheckerImpl(
+          templateTypeChecker, program.getTypeChecker(), [new NullishCoalescingNotNullableCheck()]);
+      const diags = extendedTemplateChecker.getExtendedTemplateDiagnosticsForComponent(component);
+      expect(diags.length).toBe(1);
+      expect(diags[0].category).toBe(ts.DiagnosticCategory.Warning);
+      expect(diags[0].code).toBe(ErrorCode.NULLISH_COALESCING_NOT_NULLABLE);
+      expect(getSourceCodeForDiagnostic(diags[0])).toBe('var1');
+    });
+
+    it('should not produce nullish coalescing warning', () => {
+      const fileName = absoluteFrom('/main.ts');
+      const {program, templateTypeChecker} = setup([{
+        fileName,
+        templates: {
+          'TestCmp': '{{ var1 ?? null }}',
+        },
+        source: 'export class TestCmp { var1: string | null = "text"; }'
+      }]);
+      const sf = getSourceFileOrError(program, fileName);
+      const component = getClass(sf, 'TestCmp');
+      const extendedTemplateChecker = new ExtendedTemplateCheckerImpl(
+          templateTypeChecker, program.getTypeChecker(), [new NullishCoalescingNotNullableCheck()]);
+      const diags = extendedTemplateChecker.getExtendedTemplateDiagnosticsForComponent(component);
+      expect(diags.length).toBe(0);
+    });
+  });
+});
