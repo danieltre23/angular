@@ -34,59 +34,8 @@ export function getExtendedTemplateDiagnosticsForComponent(
   const ctx = {templateTypeChecker, typeChecker, component} as TemplateContext;
 
   for (const check of templateChecks) {
-    diagnostics.push(...deduplicateDiagnostics(check.run(ctx, template)));
+    diagnostics.push(...check.run(ctx, template));
   }
 
   return diagnostics;
-}
-
-// Filter out duplicated diagnostics, this is possible due to the way the compiler
-// handles desugaring and produces `AST`s. Ex.
-//
-// ```
-// <div *ngIf="true" (foo)="bar">test</div>
-// ```
-//
-// Would result in the following AST:
-//
-// ```
-// Template {
-//   outputs: [
-//    BoundEvent {
-//      name: 'foo',
-//      /.../
-//    }
-//   ],
-//   children: [
-//     Element {
-//       outputs: [
-//         BoundEvent {
-//           name: 'foo',
-//           /.../
-//         }
-//       ]
-//     }
-//   ],
-//   /.../
-// }
-// ```
-//
-// In this case a duplicated diagnostic could be generated for the output `foo`.
-// TODO(danieltrevino): handle duplicated diagnostics when they are being generated
-// to avoid extra work (could be directly in the visitor).
-// https://github.com/angular/angular/pull/42984#discussion_r684823926
-function deduplicateDiagnostics(diagnostics: TemplateDiagnostic[]): TemplateDiagnostic[] {
-  const result: TemplateDiagnostic[] = [];
-  for (const newDiag of diagnostics) {
-    const isDuplicateDiag = result.some(existingDiag => areDiagnosticsEqual(newDiag, existingDiag));
-    if (!isDuplicateDiag) {
-      result.push(newDiag);
-    }
-  }
-  return result;
-}
-
-function areDiagnosticsEqual(first: TemplateDiagnostic, second: TemplateDiagnostic): boolean {
-  return first.file?.fileName === second.file?.fileName && first.start === second.start &&
-      first.length === second.length && first.code === second.code;
 }
