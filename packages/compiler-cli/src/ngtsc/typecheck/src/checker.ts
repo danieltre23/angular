@@ -23,7 +23,7 @@ import {getSourceFileOrNull, isSymbolWithValueDeclaration} from '../../util/src/
 import {DirectiveInScope, ElementSymbol, FullTemplateMapping, GlobalCompletion, NgTemplateDiagnostic, OptimizeFor, PipeInScope, ProgramTypeCheckAdapter, ShimLocation, Symbol, TemplateDiagnostic, TemplateId, TemplateSymbol, TemplateTypeChecker, TypeCheckableDirectiveMeta, TypeCheckingConfig} from '../api';
 import {makeTemplateDiagnostic} from '../diagnostics';
 import {ExtendedTemplateCheckerImpl} from '../extended';
-import {InvalidBananaInBoxCheck} from '../extended/src/template_checks/invalid_banana_in_box';
+import {InvalidBananaInBoxCheck} from '../extended/checks/invalid_banana_in_box';
 
 import {CompletionEngine} from './completion';
 import {InliningMode, ShimTypeCheckingData, TemplateData, TypeCheckContextImpl, TypeCheckingHost} from './context';
