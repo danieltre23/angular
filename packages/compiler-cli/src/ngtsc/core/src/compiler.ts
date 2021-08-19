@@ -31,6 +31,7 @@ import {aliasTransformFactory, CompilationMode, declarationTransformFactory, Dec
 import {TemplateTypeCheckerImpl} from '../../typecheck';
 import {OptimizeFor, TemplateTypeChecker, TypeCheckingConfig} from '../../typecheck/api';
 import {ExtendedTemplateCheckerImpl} from '../../typecheck/extended';
+import {TemplateCheckFactory} from '../../typecheck/extended/api';
 import {InvalidBananaInBoxCheck} from '../../typecheck/extended/checks/invalid_banana_in_box';
 import {getSourceFileOrNull, isDtsPath, resolveModuleName, toUnredirectedSourceFile} from '../../util/src/typescript';
 import {Xi18nContext} from '../../xi18n';
@@ -918,7 +919,7 @@ export class NgCompiler {
     const diagnostics: ts.Diagnostic[] = [];
     const compilation = this.ensureAnalyzed();
     const typeChecker = this.inputProgram.getTypeChecker();
-    const templateChecks = [new InvalidBananaInBoxCheck()];
+    const templateChecks: TemplateCheckFactory[] = [(ctx) => new InvalidBananaInBoxCheck(ctx)];
     const extendedTemplateChecker = new ExtendedTemplateCheckerImpl(
         compilation.templateTypeChecker, typeChecker, templateChecks);
     if (sf !== undefined) {

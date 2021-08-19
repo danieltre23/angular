@@ -250,7 +250,7 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
 
       if (extendedTemplateDiagnsotics) {
         const extendedTemplateChecker = new ExtendedTemplateCheckerImpl(
-            this, typeCheckProgram.getTypeChecker(), [new InvalidBananaInBoxCheck()]);
+            this, typeCheckProgram.getTypeChecker(), [(ctx) => new InvalidBananaInBoxCheck(ctx)]);
 
         diagnostics.push(
             ...extendedTemplateChecker.getExtendedTemplateDiagnosticsForComponent(component));

@@ -21,7 +21,7 @@ export interface TemplateCheck<T extends ErrorCode> {
   code: T;
 
   /** Runs check and returns information about the diagnostics to be generated. */
-  run(ctx: TemplateContext, template: TmplAstNode[]): NgTemplateDiagnostic<T>[];
+  run(component: ts.ClassDeclaration, template: TmplAstNode[]): NgTemplateDiagnostic<T>[];
 }
 
 /**
@@ -36,7 +36,9 @@ export interface TemplateContext {
    * in the template (it is not to query types outside the Angular component).
    */
   typeChecker: ts.TypeChecker;
-
-  /** The `@Component()` class from which the template was obtained. */
-  component: ts.ClassDeclaration;
 }
+
+/**
+ * Function to construct a TemplateCheck with a TempalteContext;
+ */
+export type TemplateCheckFactory = (ctx: TemplateContext) => TemplateCheck<ErrorCode>;

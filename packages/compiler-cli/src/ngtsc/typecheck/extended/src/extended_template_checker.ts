@@ -10,13 +10,22 @@ import * as ts from 'typescript';
 
 import {ErrorCode} from '../../../diagnostics';
 import {TemplateDiagnostic, TemplateTypeChecker} from '../../api';
-import {ExtendedTemplateChecker, TemplateCheck, TemplateContext} from '../api';
+import {ExtendedTemplateChecker, TemplateCheck, TemplateCheckFactory, TemplateContext} from '../api';
 
 export class ExtendedTemplateCheckerImpl implements ExtendedTemplateChecker {
+  private ctx: TemplateContext;
+  private templateChecks: TemplateCheck<ErrorCode>[];
+
   constructor(
       private readonly templateTypeChecker: TemplateTypeChecker,
       private readonly typeChecker: ts.TypeChecker,
-      private readonly templateChecks: TemplateCheck<ErrorCode>[]) {}
+      private readonly templateCheckClasses: TemplateCheckFactory[]) {
+    this.ctx = {templateTypeChecker: this.templateTypeChecker, typeChecker: this.typeChecker} as
+        TemplateContext;
+    this.templateChecks = templateCheckClasses.map(check => {
+      return check(this.ctx);
+    });
+  }
 
   getExtendedTemplateDiagnosticsForComponent(component: ts.ClassDeclaration): TemplateDiagnostic[] {
     const template = this.templateTypeChecker.getTemplate(component);
@@ -28,14 +37,8 @@ export class ExtendedTemplateCheckerImpl implements ExtendedTemplateChecker {
     }
     const diagnostics: TemplateDiagnostic[] = [];
 
-    const ctx = {
-      templateTypeChecker: this.templateTypeChecker,
-      typeChecker: this.typeChecker,
-      component
-    } as TemplateContext;
-
     for (const check of this.templateChecks) {
-      diagnostics.push(...deduplicateDiagnostics(check.run(ctx, template)));
+      diagnostics.push(...deduplicateDiagnostics(check.run(component, template)));
     }
 
     return diagnostics;
