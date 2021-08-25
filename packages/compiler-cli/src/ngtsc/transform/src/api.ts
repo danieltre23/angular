@@ -190,7 +190,7 @@ export interface DecoratorHandler<D, A, S extends SemanticSymbol|null, R> {
 
   extendedTemplateCheck?
       (component: ts.ClassDeclaration, extendedTemplateChecker: ExtendedTemplateChecker):
-          ts.Diagnostic[];
+          (ts.Diagnostic&{quickFixData?: unknown})[];
 
   /**
    * Generate a description of the field which should be added to the class, including any

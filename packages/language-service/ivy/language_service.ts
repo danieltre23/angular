@@ -66,9 +66,9 @@ export class LanguageService {
     return this.options;
   }
 
-  getSemanticDiagnostics(fileName: string): ts.Diagnostic[] {
+  getSemanticDiagnostics(fileName: string): (ts.Diagnostic&{quickFixData?: unknown})[] {
     return this.withCompilerAndPerfTracing(PerfPhase.LsDiagnostics, (compiler) => {
-      const diagnostics: ts.Diagnostic[] = [];
+      const diagnostics: (ts.Diagnostic&{quickFixData?: unknown})[] = [];
       if (isTypeScriptFile(fileName)) {
         const program = compiler.getCurrentProgram();
         const sourceFile = program.getSourceFile(fileName);

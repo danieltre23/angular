@@ -41,11 +41,28 @@ export class NullishCoalescingNotNullableCheck extends
     if (symbol.kind !== SymbolKind.Expression) {
       return [];
     }
+    const varName =
+        ctx.templateTypeChecker.getTemplateMappingAtShimLocation(
+                                   symbolLeft.shimLocation)!.span.toString();
     const span =
         ctx.templateTypeChecker.getTemplateMappingAtShimLocation(symbol.shimLocation)!.span;
     const diagnostic = ctx.templateTypeChecker.makeTemplateDiagnostic(
         component, span, ts.DiagnosticCategory.Warning, ErrorCode.NULLISH_COALESCING_NOT_NULLABLE,
-        `The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed.`);
+        `The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed.`,
+        undefined, {
+          title: 'Quick fix for nullish',
+          range: {
+            start: {
+              line: span.start.line,
+              character: span.start.col,
+            },
+            end: {
+              line: span.end.line,
+              character: span.end.col,
+            }
+          },
+          fix: varName
+        });
     return [diagnostic];
   }
 }

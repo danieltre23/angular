@@ -43,6 +43,8 @@ export interface TemplateDiagnostic extends ts.Diagnostic {
    * The template id of the component that resulted in this diagnostic.
    */
   templateId: TemplateId;
+
+  quickFixData?: unknown;
 }
 
 /**

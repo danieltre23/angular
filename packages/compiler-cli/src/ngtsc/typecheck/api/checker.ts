@@ -63,7 +63,8 @@ export interface TemplateTypeChecker {
    *
    * This method always runs in `OptimizeFor.SingleFile` mode.
    */
-  getDiagnosticsForComponent(component: ts.ClassDeclaration): ts.Diagnostic[];
+  getDiagnosticsForComponent(component: ts.ClassDeclaration): (ts.Diagnostic&
+                                                               {quickFixData?: unknown})[];
 
   /**
    * Ensures shims for the whole program are generated. This type of operation would be required by
@@ -175,7 +176,8 @@ export interface TemplateTypeChecker {
         start: number,
         end: number,
         sourceFile: ts.SourceFile,
-      }[]): NgTemplateDiagnostic<T>;
+      }[],
+      quickFixData?: unknown): NgTemplateDiagnostic<T>;
 }
 
 /**

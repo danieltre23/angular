@@ -35,7 +35,21 @@ export class InvalidBananaInBoxCheck extends
         component, node.sourceSpan, ts.DiagnosticCategory.Warning, ErrorCode.INVALID_BANANA_IN_BOX,
         `In the two-way binding syntax the parentheses should be inside the brackets, ex. '${
             expectedBoundSyntax}'. 
-        Find more at https://angular.io/guide/two-way-binding`);
+        Find more at https://angular.io/guide/two-way-binding`,
+        undefined, {
+          title: 'Quick fix for banana',
+          range: {
+            start: {
+              line: node.sourceSpan.start.line,
+              character: node.sourceSpan.start.col,
+            },
+            end: {
+              line: node.sourceSpan.end.line,
+              character: node.sourceSpan.end.col,
+            }
+          },
+          fix: expectedBoundSyntax
+        });
     return [diagnostic];
   }
 }

@@ -449,8 +449,9 @@ export class NgCompiler {
    *
    * If a `ts.SourceFile` is passed, only diagnostics related to that file are returned.
    */
-  getDiagnosticsForFile(file: ts.SourceFile, optimizeFor: OptimizeFor): ts.Diagnostic[] {
-    const diagnostics: ts.Diagnostic[] = [];
+  getDiagnosticsForFile(file: ts.SourceFile, optimizeFor: OptimizeFor):
+      (ts.Diagnostic&{quickFixData?: unknown})[] {
+    const diagnostics: (ts.Diagnostic&{quickFixData?: unknown})[] = [];
     diagnostics.push(
         ...this.getNonTemplateDiagnostics().filter(diag => diag.file === file),
         ...this.getTemplateDiagnosticsForFile(file, optimizeFor));
@@ -932,8 +933,9 @@ export class NgCompiler {
    *     or all files in the program if `sf` is undefined
    * @returns generated extended template diagnostics
    */
-  private getExtendedTemplateDiagnostics(sf?: ts.SourceFile): ts.Diagnostic[] {
-    const diagnostics: ts.Diagnostic[] = [];
+  private getExtendedTemplateDiagnostics(sf?: ts.SourceFile): (ts.Diagnostic&
+                                                               {quickFixData?: unknown})[] {
+    const diagnostics: (ts.Diagnostic&{quickFixData?: unknown})[] = [];
     const compilation = this.ensureAnalyzed();
     const extendedTemplateChecker = compilation.extendedTemplateChecker;
     if (sf !== undefined) {

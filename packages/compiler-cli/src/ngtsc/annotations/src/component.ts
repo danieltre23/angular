@@ -615,8 +615,8 @@ export class ComponentDecoratorHandler implements
   }
 
   extendedTemplateCheck(
-      component: ts.ClassDeclaration,
-      extendedTemplateChecker: ExtendedTemplateChecker): ts.Diagnostic[] {
+      component: ts.ClassDeclaration, extendedTemplateChecker: ExtendedTemplateChecker):
+      (ts.Diagnostic&{quickFixData?: unknown})[] {
     return extendedTemplateChecker.getDiagnosticsForComponent(component);
   }
 

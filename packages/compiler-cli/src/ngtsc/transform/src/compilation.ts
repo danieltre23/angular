@@ -492,13 +492,13 @@ export class TraitCompiler implements ProgramTypeCheckAdapter {
   }
 
   extendedTemplateCheck(sf: ts.SourceFile, extendedTemplateChecker: ExtendedTemplateChecker):
-      ts.Diagnostic[] {
+      (ts.Diagnostic&{quickFixData?: unknown})[] {
     const classes = this.fileToClasses.get(sf);
     if (classes === undefined) {
       return [];
     }
 
-    const diagnostics: ts.Diagnostic[] = [];
+    const diagnostics: (ts.Diagnostic&{quickFixData?: unknown})[] = [];
     for (const clazz of classes) {
       if (!isNamedClassDeclaration(clazz)) {
         continue;

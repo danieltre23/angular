@@ -214,7 +214,8 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
     });
   }
 
-  getDiagnosticsForComponent(component: ts.ClassDeclaration): ts.Diagnostic[] {
+  getDiagnosticsForComponent(component: ts.ClassDeclaration): (ts.Diagnostic&
+                                                               {quickFixData?: unknown})[] {
     this.ensureShimForComponent(component);
 
     return this.perf.inPhase(PerfPhase.TtcDiagnostics, () => {
@@ -316,7 +317,8 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
         start: number,
         end: number,
         sourceFile: ts.SourceFile,
-      }[]): NgTemplateDiagnostic<T> {
+      }[],
+      quickFixData?: unknown): NgTemplateDiagnostic<T> {
     const sfPath = absoluteFromSourceFile(clazz.getSourceFile());
     const fileRecord = this.state.get(sfPath)!;
     const templateId = fileRecord.sourceManager.getTemplateId(clazz);
@@ -325,7 +327,7 @@ export class TemplateTypeCheckerImpl implements TemplateTypeChecker {
     return {
       ...makeTemplateDiagnostic(
           templateId, mapping, sourceSpan, category, ngErrorCode(errorCode), message,
-          relatedInformation),
+          relatedInformation, quickFixData),
       __ngCode: errorCode
     };
   }
